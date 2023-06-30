@@ -1,7 +1,7 @@
 function getData(lat, lon) {
   const url = "https://api.openweathermap.org/data/3.0/"
   + "onecall?lat=" + lat + "&lon=" + lon + "&units=metric&"
-  + "appid=" + apiKey;
+  + "appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
 
   fetch(url)
   .then(response => {
@@ -24,7 +24,7 @@ function getData(lat, lon) {
 }
 
 
-getData("45.42", "-75.69")
+getData("45.42", "-75.69");
 
 
 function populateHeader(obj) {
@@ -40,6 +40,8 @@ function populateHeader(obj) {
   const windSpeed = $("#windSpeed");
   windSpeed.text(`Wind: ${Math.round(obj.current.wind_speed)} km/h`)
 
+  const weatherInCity = $("#weatherInCity");
+  weatherInCity.text(`Weather in ${$("#cityName").val().charAt(0).toUpperCase() + $("#cityName").val().slice(1) || "Ottawa"}`)
   const date = new Date(obj.current.dt * 1000);
   const dayOfWeek = $("#dayOfWeek");
   const min = date.getMinutes().toString().length == 2 ? date.getMinutes() : "0" + date.getMinutes()
@@ -181,6 +183,7 @@ function lineChart(tempData, hour) {
 
 function populateDailyWeather(obj) {
   const divOfAllDailyWeather = $("#dailyWeather");
+  divOfAllDailyWeather.empty();
 
   for (const dailyInfo of obj.daily) {
     const divDaily = $("<div>");
