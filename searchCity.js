@@ -1,5 +1,5 @@
 function getLatLonOfCity(city) {
-  const url = "http://api.openweathermap.org/geo/1.0/direct?q="
+  const url = "https://api.openweathermap.org/geo/1.0/direct?q="
   + city + "&limit=1&appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
 
   fetch(url)
