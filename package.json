@@ -1,0 +1,22 @@
+{
+  "name": "weather",
+  "version": "1.0.0",
+  "description": "",
+  "main": "weather.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pengyong-Zhan/weather-luz.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Pengyong-Zhan/weather-luz/issues"
+  },
+  "homepage": "https://github.com/Pengyong-Zhan/weather-luz#readme",
+  "dependencies": {
+    "moment-timezone": "^0.5.43"
+  }
+}
