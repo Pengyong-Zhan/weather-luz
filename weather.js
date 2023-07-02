@@ -330,7 +330,7 @@ function getIcon(desc, mainDesc, date, timeZone) {
 
 
 function getCityName(lat, lon) {
-  const url = "http://api.openweathermap.org/geo/1.0/reverse?lat="
+  const url = "https://api.openweathermap.org/geo/1.0/reverse?lat="
   + lat + "&lon=" + lon + "&limit=2&appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
 
   fetch(url)
