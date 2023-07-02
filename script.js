@@ -7295,11 +7295,16 @@ function getLatLonOfCity(city) {
     return response.json();
   })
   .then(data => {
-    const lat = Math.round(data[0].lat, 2);
-    const lon = Math.round(data[0].lon, 2);
-    const country = data[0].country;
-    const timeZone = moment.tz.zonesForCountry(country)[0];
-    getData(lat, lon, timeZone)
+    const lat = data[0].lat.toFixed(4);
+    const lon = data[0].lon.toFixed(4);
+
+    if (lat) {
+      localStorage.setItem('lat', lat);
+      localStorage.setItem('lon', lon);
+      //localStorage.setItem('cityName', $("#cityName").val());
+    }
+
+    getData(lat, lon);
   })
   .catch(error => {
     console.error(error);
@@ -7309,12 +7314,43 @@ function getLatLonOfCity(city) {
 
 
 $("#searchCity").click(function() {
-  getLatLonOfCity($("#cityName").val());
+  getLatLonOfCity($("#cityName").val());  
 })
 
 
+////GeoLocation////
+function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(getLatLonByPosition);
+  } else { 
+    //
+  }
+}
+
+
+function getLatLonByPosition(position) {
+  const lat = Number(position.coords.latitude.toFixed(4));
+  const lon = Number(position.coords.longitude.toFixed(4));
+  localStorage.setItem('lat', lat);
+  localStorage.setItem('lon', lon);
+  getData(lat, lon);
+}
+
+
+if (localStorage.getItem('lat')) {
+  const lat = localStorage.getItem('lat');
+  const lon = localStorage.getItem('lon');
+  getData(lat, lon);
+} else {
+  getData("45.42", "-75.69");
+  setTimeout(function() {
+    getLocation();
+  }, 3000);   
+}
+
+
 ////code in original weather.js////
-function getData(lat, lon, timeZone) {
+function getData(lat, lon) {
   const url = "https://api.openweathermap.org/data/3.0/"
   + "onecall?lat=" + lat + "&lon=" + lon + "&units=metric&"
   + "appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
@@ -7327,6 +7363,10 @@ function getData(lat, lon, timeZone) {
     return response.json();
   })
   .then(data => {
+    getCityName(lat, lon);
+    const timeZone = data.timezone;
+    localStorage.setItem('timeZone', timeZone);
+
     populateHeader(data, timeZone);
     lineChart(getHourlyTemp(data), Number(getHourPart(getFormattedDate(getTimeStamp(data.current.dt), timeZone))));
     populateDailyWeather(data, timeZone);
@@ -7336,11 +7376,7 @@ function getData(lat, lon, timeZone) {
     console.error(error);
   });
 
-  console.log(url);
 }
-
-
-getData("45.42", "-75.69", "America/Toronto");
 
 
 /*callback functions defined in getData()*/
@@ -7357,11 +7393,8 @@ function populateHeader(obj, timeZone) {
   const windSpeed = $("#windSpeed");
   windSpeed.text(`Wind: ${Math.round(obj.current.wind_speed)} km/h`)
 
-  const weatherInCity = $("#weatherInCity");
-  weatherInCity.text(`Weather in ${$("#cityName").val().charAt(0).toUpperCase() + $("#cityName").val().slice(1) || "Ottawa"}`)
   const date = new Date(obj.current.dt * 1000);
   const dayOfWeek = $("#dayOfWeek");
-
   dayOfWeek.text(getWeekDay(date, timeZone) + " " + getFormattedDate(date, timeZone));
 
   const weatherDesc = $("#weatherDesc")
@@ -7378,6 +7411,7 @@ function populateHeader(obj, timeZone) {
 function populateHourlyWeatherDesc(obj, timeZone) {
   const hourlyWeatherDesc = $("#hourlyWeatherDesc");
   hourlyWeatherDesc.empty();
+
   for (const hourlyData of obj.hourly.slice(0, 24)) {
     const img = $("<img>");
     img.attr("src", getIcon(hourlyData.weather[0].description, hourlyData.weather[0].main, getTimeStamp(hourlyData.dt), timeZone));
@@ -7408,9 +7442,9 @@ function lineChart(tempData, hour) {
       labels: {
         formatter: function () {
           if (this.value > 24) {
-            return this.value -24
+            return this.value - 24;
           } else {
-            return this.value 
+            return this.value;
           }
         }
       }
@@ -7444,7 +7478,7 @@ function lineChart(tempData, hour) {
         }
     },
     series: [{ 
-        name: "Tempreature",
+        name: "Temperature",
         data: tempData
     }]      
   });
@@ -7464,12 +7498,12 @@ function populateDailyWeather(obj, timeZone) {
     dayOfWeek.text(getWeekDay(date, timeZone));
 
     const icon = $("<img>");
-    icon.attr("src", getIcon(dailyInfo.weather[0].main, dailyInfo.weather[0].description, getTimeStamp(dailyInfo.dt), timeZone))
+    icon.attr("src", getIcon(dailyInfo.weather[0].main, dailyInfo.weather[0].description, getTimeStamp(dailyInfo.dt), timeZone));
     icon.css({
       width: "100px",
-      heigh: "100px"
-    })
-    icon.css("margin-top", "-20px");
+      heigh: "100px",
+      "margin-top": "-20px"
+    });
 
     const temp = $("<p>");
     temp.text(Math.round(dailyInfo.temp.min) + "°" + " - " + Math.round(dailyInfo.temp.max) + "°");
@@ -7536,5 +7570,30 @@ function getIcon(desc, mainDesc, date, timeZone) {
   const urlP2 = weatherMappings[desc] || weatherMappings[mainDesc] || defaultUrlP2;
   const url = urlP1 + urlP2 + urlP2DayOrNight + urlP3;
   return url;  
+}
+
+
+function getCityName(lat, lon) {
+  const url = "http://api.openweathermap.org/geo/1.0/reverse?lat="
+  + lat + "&lon=" + lon + "&limit=2&appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
+
+  fetch(url)
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Request failed" + response.status);
+    }
+    return response.json();
+  })
+  .then(data => {
+    let cityName = data[0].name;
+    if (cityName == "(Old) Ottawa") {
+      cityName = "Ottawa";
+    }
+    const weatherInCity = $("#weatherInCity");
+    weatherInCity.text(`Weather in ${cityName.charAt(0).toUpperCase() + cityName.slice(1)}`);
+  })
+  .catch(error => {
+    console.error(error);
+  });
 }
 },{"moment-timezone":2}]},{},[5]);
