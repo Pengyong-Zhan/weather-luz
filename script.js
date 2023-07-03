@@ -7282,6 +7282,13 @@ function getTimeStamp(timeStamp) {
 } 
 
 
+function timeDiffLessThan10Mins(timeStamp1, timeStamp2) {
+  let diff = Math.abs(timeStamp1 - timeStamp2);
+  let diffInMin = diff / (1000 * 60);
+  return diffInMin < 10;
+}
+
+
 ////code in original searchCity.js////
 function getLatLonOfCity(city) {
   const url = "https://api.openweathermap.org/geo/1.0/direct?q="
@@ -7321,9 +7328,7 @@ $("#searchCity").click(function() {
 function getLocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(getLatLonByPosition);
-  } else { 
-    //
-  }
+  } 
 }
 
 
@@ -7341,7 +7346,7 @@ if (localStorage.getItem('lat')) {
   const lon = localStorage.getItem('lon');
   getData(lat, lon);
 } else {
-  getData("45.42", "-75.69");
+  getData("45.4215", "-75.6972");
   setTimeout(function() {
     getLocation();
   }, 3000);   
@@ -7350,6 +7355,33 @@ if (localStorage.getItem('lat')) {
 
 ////code in original weather.js////
 function getData(lat, lon) {
+  const coords = lat + "" + lon;
+  if (localStorage.getItem(coords)) {
+    const LocalData = JSON.parse(localStorage.getItem(coords));
+    const now = new Date();
+    const dateofLocalData = new Date(LocalData[2]);
+    const data = LocalData[1]
+
+    if (coords == LocalData[0] && timeDiffLessThan10Mins(dateofLocalData, now)) {
+      getCityName(lat, lon);
+      const timeZone = data.timezone;
+      
+      populateHeader(data, timeZone);
+      lineChart(getHourlyTemp(data), Number(getHourPart(getFormattedDate(getTimeStamp(data.current.dt), timeZone))));
+      populateDailyWeather(data, timeZone);
+      populateHourlyWeatherDesc(data, timeZone);
+    } else {
+      getAndProcessDataViaAPI(lat, lon)
+    }
+  } else {
+    getAndProcessDataViaAPI(lat, lon)
+  }
+  
+}
+
+
+/*callback functions defined in getData() and getAndProcessDataViaAPI()*/
+function getAndProcessDataViaAPI(lat, lon) {
   const url = "https://api.openweathermap.org/data/3.0/"
   + "onecall?lat=" + lat + "&lon=" + lon + "&units=metric&"
   + "appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
@@ -7362,10 +7394,15 @@ function getData(lat, lon) {
     return response.json();
   })
   .then(data => {
+    let latLon = [];
+    latLon.push(lat + "" + lon);
+    latLon.push(data);
+    latLon.push(new Date());
+    localStorage.setItem(lat + "" + lon, JSON.stringify(latLon));
+    
     getCityName(lat, lon);
     const timeZone = data.timezone;
-    localStorage.setItem('timeZone', timeZone);
-
+    
     populateHeader(data, timeZone);
     lineChart(getHourlyTemp(data), Number(getHourPart(getFormattedDate(getTimeStamp(data.current.dt), timeZone))));
     populateDailyWeather(data, timeZone);
@@ -7374,11 +7411,9 @@ function getData(lat, lon) {
   .catch(error => {
     console.error(error);
   });
-
 }
 
 
-/*callback functions defined in getData()*/
 function populateHeader(obj, timeZone) {
   const temp = $("#temp");
   temp.text(`${Math.round(obj.current.temp)}°C`);
@@ -7414,6 +7449,8 @@ function populateHourlyWeatherDesc(obj, timeZone) {
   for (const hourlyData of obj.hourly.slice(0, 24)) {
     const img = $("<img>");
     img.attr("src", getIcon(hourlyData.weather[0].description, hourlyData.weather[0].main, getTimeStamp(hourlyData.dt), timeZone));
+    img.attr("title", hourlyData.weather[0].description);
+    img.attr("alt", hourlyData.weather[0].description);
     img.css({
       width: "50px",
       height: "50px"
@@ -7498,6 +7535,8 @@ function populateDailyWeather(obj, timeZone) {
 
     const icon = $("<img>");
     icon.attr("src", getIcon(dailyInfo.weather[0].main, dailyInfo.weather[0].description, getTimeStamp(dailyInfo.dt), timeZone));
+    icon.attr("title", dailyInfo.weather[0].description);
+    icon.attr("alt", dailyInfo.weather[0].description);
     icon.css({
       width: "100px",
       heigh: "100px",
@@ -7585,9 +7624,8 @@ function getCityName(lat, lon) {
   })
   .then(data => {
     let cityName = data[0].name;
-    if (cityName == "(Old) Ottawa") {
-      cityName = "Ottawa";
-    }
+    cityName = (cityName === "(Old) Ottawa") ? "Ottawa" : cityName;
+
     const weatherInCity = $("#weatherInCity");
     weatherInCity.text(`Weather in ${cityName.charAt(0).toUpperCase() + cityName.slice(1)}`);
   })
