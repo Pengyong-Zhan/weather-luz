@@ -390,3 +390,128 @@ function getCityName(lat, lon) {
     console.error(error);
   });
 }
+
+
+////map chart////
+const hcKeys = {
+  "null": "ca-5682",
+  "Vancouver": "ca-bc",
+  "Iqaluit": "ca-nu",
+  "Yellowknife": "ca-nt",
+  "Edmonton": "ca-ab",
+  "St. John's": "ca-nl",
+  "Regina": "ca-sk",
+  "Winnipeg": "ca-mb",
+  "Montreal": "ca-qc",
+  "Ottawa": "ca-on",
+  "Fredericton": "ca-nb",
+  "Halifax": "ca-ns",
+  "Charlottetown": "ca-pe",
+  "Whitehorse": "ca-yt"
+}
+
+let dataForMapChart = [];
+
+const cities = ["Vancouver", "Iqaluit", "Yellowknife", "Edmonton", "St. John's", "Regina", "Winnipeg", "Montreal", "Ottawa", "Fredericton", "Halifax", "Charlottetown", "Whitehorse"];
+let i = cities.length -1;
+
+while (i >= 0) {
+  const city = cities[i];  
+  const hckey = hcKeys[city];
+  let pair = [];
+  pair.push(hckey);
+
+  const url = "https://api.openweathermap.org/geo/1.0/direct?q="
+  + city + "&limit=1&appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
+  
+  fetch(url)
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Request failed" + response.status);
+    }
+    return response.json();
+  })
+  .then(data => {
+    const lat = data[0].lat.toFixed(4);
+    const lon = data[0].lon.toFixed(4);
+
+    const urlWeather = "https://api.openweathermap.org/data/3.0/"
+    + "onecall?lat=" + lat + "&lon=" + lon + "&units=metric&"
+    + "appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
+
+    fetch(urlWeather)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Request failed" + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      pair.push(data.current.temp);
+      dataForMapChart.push(pair);      
+      chartInCallBack(dataForMapChart);
+    })
+    .catch(error => {
+      console.error(error);
+    });
+
+  })
+  .catch(error => {
+    console.error(error);
+  });
+
+  i--;
+}
+
+
+function chartInCallBack(dataForMapChart) {
+  const url = "https://code.highcharts.com/mapdata/countries/ca/ca-all.topo.json"; 
+  fetch(url)
+    .then(response => response.json()
+    )
+    .then(geojson => {
+      createMapChart("mapChart", geojson, dataForMapChart);
+    })
+    .catch(error => {
+      console.error(error);
+    });
+}
+
+
+function createMapChart(id, geoJSON, data) {
+  Highcharts.mapChart(id,{
+    chart: {
+      map: geoJSON,
+      height: 700
+    },
+    title: {
+        text: 'Current Temperatures in Major Cities across Canadian Provinces',
+        margin: 50
+    },
+    mapNavigation: {
+      enabled: true,
+      buttonOptions: {
+        verticalAlign: 'top',
+        align: 'right',
+        x: -10
+      }
+    },
+    colorAxis: {
+      minColor: "#E2F3FF",
+      maxColor: "#2CAFFE"
+    },
+    series: [{
+      data: data,
+      name: 'Temperature',
+      states: {
+        hover: {
+          color: '#e6ebf5'
+        }
+      },
+      dataLabels: {
+        enabled: true,
+          format: '{point.name}'
+      }
+    }]      
+  });
+}
