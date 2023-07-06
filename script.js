@@ -7293,19 +7293,11 @@ const apiKey = "aaa1c1a411f7f2a242211e43a6f2e6a1";
 
 
 ////code in original searchCity.js////
-function getLatLonOfCity(city) {
-  const url = `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
-
-  fetch(url)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error("Request failed" + response.status);
-    }
-    return response.json();
-  })
-  .then(data => {
-    const lat = data[0].lat.toFixed(4);
-    const lon = data[0].lon.toFixed(4);
+function searchCityWeather(city) {
+  getLatLon(city)
+  .then(coords =>{
+    const lat = coords[0];
+    const lon = coords[1];
 
     if (lat) {
       localStorage.setItem('lat', lat);
@@ -7314,15 +7306,11 @@ function getLatLonOfCity(city) {
 
     getData(lat, lon);
   })
-  .catch(error => {
-    console.error(error);
-  });
-
 }
 
 
 $("#searchCity").click(function() {
-  getLatLonOfCity($("#cityName").val());  
+  searchCityWeather($("#cityName").val());  
 })
 
 
@@ -7731,7 +7719,7 @@ function createMapChart(id, geoJSON, data) {
       height: 700
     },
     title: {
-        text: 'Current Temperatures in Major Cities across Canadian Provinces',
+        text: 'Current Temperatures in Major Cities Across Canadian Provinces',
         margin: 50
     },
     mapNavigation: {
