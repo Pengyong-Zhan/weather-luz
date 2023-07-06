@@ -7289,10 +7289,12 @@ function timeDiffLessThan10Mins(timeStamp1, timeStamp2) {
 }
 
 
+const apiKey = "aaa1c1a411f7f2a242211e43a6f2e6a1";
+
+
 ////code in original searchCity.js////
 function getLatLonOfCity(city) {
-  const url = "https://api.openweathermap.org/geo/1.0/direct?q="
-  + city + "&limit=1&appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
+  const url = `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
 
   fetch(url)
   .then(response => {
@@ -7382,9 +7384,7 @@ function getData(lat, lon) {
 
 /*callback functions defined in getData() and getAndProcessDataViaAPI()*/
 function getAndProcessDataViaAPI(lat, lon) {
-  const url = "https://api.openweathermap.org/data/3.0/"
-  + "onecall?lat=" + lat + "&lon=" + lon + "&units=metric&"
-  + "appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
+  const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
   fetch(url)
   .then(response => {
@@ -7612,8 +7612,7 @@ function getIcon(desc, mainDesc, date, timeZone) {
 
 
 function getCityName(lat, lon) {
-  const url = "https://api.openweathermap.org/geo/1.0/reverse?lat="
-  + lat + "&lon=" + lon + "&limit=2&appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
+  const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=2&appid=${apiKey}`;
 
   fetch(url)
   .then(response => {
@@ -7656,6 +7655,7 @@ const hcKeys = {
 let dataForMapChart = [];
 
 const cities = ["Vancouver", "Iqaluit", "Yellowknife", "Edmonton", "St. John's", "Regina", "Winnipeg", "Montreal", "Ottawa", "Fredericton", "Halifax", "Charlottetown", "Whitehorse"];
+//const cities = ["Vancouver", "Iqaluit", "Yellowknife"]
 let i = cities.length -1;
 
 while (i >= 0) {
@@ -7664,46 +7664,49 @@ while (i >= 0) {
   let pair = [];
   pair.push(hckey);
 
-  const url = "https://api.openweathermap.org/geo/1.0/direct?q="
-  + city + "&limit=1&appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
-  
-  fetch(url)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error("Request failed" + response.status);
-    }
-    return response.json();
-  })
-  .then(data => {
-    const lat = data[0].lat.toFixed(4);
-    const lon = data[0].lon.toFixed(4);
+  getLatLon(city)
+    .then(coords => {
+      const lat = coords[0];
+      const lon = coords[1];
 
-    const urlWeather = "https://api.openweathermap.org/data/3.0/"
-    + "onecall?lat=" + lat + "&lon=" + lon + "&units=metric&"
-    + "appid=aaa1c1a411f7f2a242211e43a6f2e6a1";
-
-    fetch(urlWeather)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error("Request failed" + response.status);
-      }
-      return response.json();
+      getCurrentTemp(lat, lon)
+        .then(currentTemp => {
+          pair.push(currentTemp);
+          dataForMapChart.push(pair);  
+          chartInCallBack(dataForMapChart);
+        })
     })
-    .then(data => {
-      pair.push(data.current.temp);
-      dataForMapChart.push(pair);      
-      chartInCallBack(dataForMapChart);
-    })
-    .catch(error => {
-      console.error(error);
-    });
-
-  })
-  .catch(error => {
-    console.error(error);
-  });
-
   i--;
+}
+
+
+async function getLatLon(city) {
+  const url = `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
+
+  try {
+    const response = await fetch(url);
+    const [data] = await response.json()
+    const coords = [data.lat.toFixed(4), data.lon.toFixed(4)];
+    return coords;
+  } catch (error) {
+    console.error('Error fetching coords data:', error);
+    throw error;
+  }
+}
+
+
+async function getCurrentTemp(lat, lon) {  
+  const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json()
+    return data.current.temp
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+    throw error;
+  }
+
 }
 
 
