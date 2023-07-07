@@ -129,33 +129,22 @@ function getData(lat, lon) {
 
 /*callback functions defined in getData() and getAndProcessDataViaAPI()*/
 function getAndProcessDataViaAPI(lat, lon) {
-  const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
-
-  fetch(url)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error("Request failed" + response.status);
-    }
-    return response.json();
-  })
-  .then(data => {
-    let latLon = [];
-    latLon.push(lat + "" + lon);
-    latLon.push(data);
-    latLon.push(new Date());
-    localStorage.setItem(lat + "" + lon, JSON.stringify(latLon));
-    
-    getCityName(lat, lon);
-    const timeZone = data.timezone;
-    
-    populateHeader(data, timeZone);
-    lineChart(getHourlyTemp(data), Number(getHourPart(getFormattedDate(getTimeStamp(data.current.dt), timeZone))));
-    populateDailyWeather(data, timeZone);
-    populateHourlyWeatherDesc(data, timeZone);
-  })
-  .catch(error => {
-    console.error(error);
-  });
+  getCurrentWeather(lat, lon)
+    .then(data => {
+      let latLon = [];
+      latLon.push(lat + "" + lon);
+      latLon.push(data);
+      latLon.push(new Date());
+      localStorage.setItem(lat + "" + lon, JSON.stringify(latLon));
+      
+      getCityName(lat, lon);
+      const timeZone = data.timezone;
+      
+      populateHeader(data, timeZone);
+      lineChart(getHourlyTemp(data), Number(getHourPart(getFormattedDate(getTimeStamp(data.current.dt), timeZone))));
+      populateDailyWeather(data, timeZone);
+      populateHourlyWeatherDesc(data, timeZone);
+    })
 }
 
 
@@ -454,6 +443,20 @@ async function getCurrentTemp(lat, lon) {
 
 }
 
+
+async function getCurrentWeather(lat, lon) {  
+  const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+    throw error;
+  }
+
+}
 
 function chartInCallBack(dataForMapChart) {
   const url = "https://code.highcharts.com/mapdata/countries/ca/ca-all.topo.json"; 
