@@ -7370,15 +7370,21 @@ function getData(lat, lon) {
 }
 
 
+function storeDataToLocalStorage(lat, lon, data) {
+  let latLon = [];
+  latLon.push(lat + "" + lon);
+  latLon.push(data);
+  latLon.push(new Date());
+  localStorage.setItem(lat + "" + lon, JSON.stringify(latLon));
+  console.log(JSON.parse(localStorage.getItem(lat + "" + lon)));
+}
+
+
 /*callback functions defined in getData() and getAndProcessDataViaAPI()*/
 function getAndProcessDataViaAPI(lat, lon) {
   getCurrentWeather(lat, lon)
     .then(data => {
-      let latLon = [];
-      latLon.push(lat + "" + lon);
-      latLon.push(data);
-      latLon.push(new Date());
-      localStorage.setItem(lat + "" + lon, JSON.stringify(latLon));
+      storeDataToLocalStorage(lat, lon, data);
       
       getCityName(lat, lon);
       const timeZone = data.timezone;
@@ -7612,6 +7618,9 @@ function getCityName(lat, lon) {
 
 
 ////map chart////
+
+
+
 const hcKeys = {
   "null": "ca-5682",
   "Vancouver": "ca-bc",
@@ -7646,14 +7655,45 @@ while (i >= 0) {
       const lat = coords[0];
       const lon = coords[1];
 
-      getCurrentTemp(lat, lon)
-        .then(currentTemp => {
-          pair.push(currentTemp);
-          dataForMapChart.push(pair);  
-          chartInCallBack(dataForMapChart);
-        })
+      getMapDataAndDrawMap(lat, lon, pair);
     })
   i--;
+}
+
+
+function drawMapViaAPIData(lat, lon, pair) {
+  getCurrentWeather(lat, lon)
+    .then(data => {
+      storeDataToLocalStorage(lat, lon, data);
+
+      const currentTemp = data.current.temp;
+      pair.push(currentTemp);
+      dataForMapChart.push(pair);
+      chartInCallBack(dataForMapChart);
+    })
+}
+
+
+function getMapDataAndDrawMap(lat, lon, pair) {
+  const coords = lat + "" + lon;
+  if (localStorage.getItem(coords)) {
+    const LocalData = JSON.parse(localStorage.getItem(coords));
+    const now = new Date();
+    const dateofLocalData = new Date(LocalData[2]);
+    const data = LocalData[1]
+
+    if (coords == LocalData[0] && timeDiffLessThan10Mins(dateofLocalData, now)) {
+      const currentTemp = data.current.temp;
+      pair.push(currentTemp);
+      dataForMapChart.push(pair);
+      chartInCallBack(dataForMapChart);
+    } else {
+      drawMapViaAPIData(lat, lon, pair)
+    }
+  } else {
+    drawMapViaAPIData(lat, lon, pair)
+  }
+  
 }
 
 
@@ -7669,21 +7709,6 @@ async function getLatLon(city) {
     console.error('Error fetching coords data:', error);
     throw error;
   }
-}
-
-
-async function getCurrentTemp(lat, lon) {  
-  const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
-
-  try {
-    const response = await fetch(url);
-    const data = await response.json()
-    return data.current.temp
-  } catch (error) {
-    console.error('Error fetching weather data:', error);
-    throw error;
-  }
-
 }
 
 
