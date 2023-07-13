@@ -18,14 +18,14 @@
 <body>
   <section id="summary">
     <div class="container-lg">
-      <div class="d-flex justify-content-between align-items-center mt-3">
-        <div id="left" >
+      <div class="d-flex flex-wrap justify-content-center align-items-center mt-3">
+        <div id="left" class="mb-3">
           <h1 class="display-5" id="weatherInCity">Weather Luz</h1>
           <p id="dayOfWeek" title="get refreshed after every 10 minutes">Monday</p>
           <p id="weatherDesc">Scattered thunderstorms</p>
         </div>
         
-        <div id="right">
+        <div id="right" class="mx-5">
           <div class="d-flex justify-content-center align-items-center" id="headerInfo">
             <div>
               <img src="https://openweathermap.org/img/wn/03d@2x.png" alt="weather info" id="headerWeatherIcon">
@@ -54,7 +54,7 @@
 
 
   <section>
-    <ul class="nav nav-tabs">
+    <ul class="nav nav-tabs mt-3">
       <li class="nav-item">
         <a class="nav-link active" aria-current="page" href="#">Temperature</a>
       </li>
@@ -67,8 +67,8 @@
     </ul>
 
     <div id="lineChartTemp"></div>
-    <div class="d-flex justify-content-evenly mt-n2" id="hourlyWeatherDesc"></div>
-    <div class="d-flex justify-content-evenly mt-3" id="dailyWeather"></div>
+    <div class="d-flex justify-content-evenly mt-n2 d-none d-md-block" id="hourlyWeatherDesc"></div>
+    <div class="d-flex flex-wrap justify-content-evenly mt-3" id="dailyWeather"></div>
     <hr>
     <div class="col-md-12 mt-3 pt-2" id="mapChart"></div>
   </section>
